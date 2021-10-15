@@ -19,4 +19,5 @@ public class Params {
 	/** Rate associated with data downlink to ground stations (in bits per second) */
 	public final static double downlinkRate = 1E6;
 	
+	public final static double priorityCloudProbaWeight = 2.;
 }

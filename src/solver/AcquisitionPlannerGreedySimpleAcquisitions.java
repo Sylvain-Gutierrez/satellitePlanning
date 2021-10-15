@@ -29,7 +29,7 @@ import problem.Satellite;
  * @author cpralet
  *
  */
-public class AcquisitionPlannerGreedyPriority {
+public class AcquisitionPlannerGreedySimpleAcquisitions {
 
 	/** Planning problem for which this acquisition planner is used */
 	private final PlanningProblem planningProblem;
@@ -41,7 +41,7 @@ public class AcquisitionPlannerGreedyPriority {
 	 * Build an acquisition planner for a planning problem
 	 * @param planningProblem
 	 */
-	public AcquisitionPlannerGreedyPriority(PlanningProblem planningProblem){
+	public AcquisitionPlannerGreedySimpleAcquisitions(PlanningProblem planningProblem){
 		this.planningProblem = planningProblem;
 		satellitePlans = new HashMap<Satellite,SatellitePlan>();
 		for(Satellite satellite : planningProblem.satellites){
@@ -61,19 +61,51 @@ public class AcquisitionPlannerGreedyPriority {
         
         // Comparator used to sort the list
         
+		// Map<CandidateAcquisition,CandidateAcquisition> simpleCandidateAcquisitions = new HashMap<CandidateAcquisition,CandidateAcquisition>();
+		// for(CandidateAcquisition acq : candidateAcquisitions){
+		// 	for(AcquisitionWindow w : acq.acquisitionWindows){
+		// 		CandidateAcquisition temp_acq = new CandidateAcquisition(acq.name, acq.user, acq.priority, acq.longitude, acq.latitude, acq.idx);
+		// 		temp_acq.acquisitionWindows.add(w);
+		// 		simpleCandidateAcquisitions.put(temp_acq, acq);
+		// 	}
+		// }
 
-		while(!candidateAcquisitions.isEmpty()){
+		List<CandidateAcquisition> simpleCandidateAcquisitions = new ArrayList<CandidateAcquisition>();
+		for(CandidateAcquisition acq : candidateAcquisitions){
+				for(AcquisitionWindow w : acq.acquisitionWindows){
+					CandidateAcquisition temp_acq = new CandidateAcquisition(acq.name, acq.user, acq.priority, acq.longitude, acq.latitude, acq.idx);
+					temp_acq.acquisitionWindows.add(w);
+					simpleCandidateAcquisitions.add(temp_acq);
+				}
+			}
+
+			
+		Collections.sort(simpleCandidateAcquisitions,new Comparator<CandidateAcquisition>(){
+			public int compare(CandidateAcquisition a1,CandidateAcquisition a2){
+					return (int) (1000*(a1.priority - a2.priority + Params.priorityCloudProbaWeight * (a1.acquisitionWindows.get(0).cloudProba - a2.acquisitionWindows.get(0).cloudProba)));
+			}});
+
+		while(!simpleCandidateAcquisitions.isEmpty()){
             // select one candidate acquisition by priority and cloudProba
             
             // randomize in order to test the solver:
             //Collections.shuffle(candidateAcquisitions);
 
-            Collections.sort(candidateAcquisitions,new Comparator<CandidateAcquisition>(){
-                public int compare(CandidateAcquisition a1,CandidateAcquisition a2){
-                      return a1.priority - a2.priority;
-                }});
-            CandidateAcquisition a = candidateAcquisitions.remove(0);                
-                
+            // Collections.sort(candidateAcquisitions,new Comparator<CandidateAcquisition>(){
+            //     public int compare(CandidateAcquisition a1,CandidateAcquisition a2){
+            //           return a1.priority - a2.priority;
+            //     }});
+            // CandidateAcquisition a = candidateAcquisitions.remove(0);                
+            
+			// List<CandidateAcquisition> simpleCandidateAcquisitionsKeys = new ArrayList<CandidateAcquisition>();
+			// for (CandidateAcquisition a : simpleCandidateAcquisitions.keySet()) {
+			// 	simpleCandidateAcquisitionsKeys.add(a);
+			//   }
+
+			CandidateAcquisition a = simpleCandidateAcquisitions.remove(0);
+
+
+
             // try to plan one acquisition window for this acquisition (and stop once a feasible acquisition window is found
             for(AcquisitionWindow acqWindow : a.acquisitionWindows){
 				Satellite satellite = acqWindow.satellite;
@@ -82,6 +114,13 @@ public class AcquisitionPlannerGreedyPriority {
 				if(satellitePlan.isFeasible()){
 					nPlanned++;
 					a.selectedAcquisitionWindow = acqWindow;
+					List <CandidateAcquisition> removeList = new ArrayList<CandidateAcquisition>();
+					for(CandidateAcquisition acq : simpleCandidateAcquisitions){
+						if (acq.name.equals(a.name)) {
+							removeList.add(acq);
+						}
+					}
+					simpleCandidateAcquisitions.removeAll(removeList);
 					break;
 				}
 				else
@@ -185,7 +224,7 @@ public class AcquisitionPlannerGreedyPriority {
 		ProblemParserXML parser = new ProblemParserXML(); 
 		PlanningProblem pb = parser.read(Params.systemDataFile,Params.planningDataFile);
 		pb.printStatistics();
-		AcquisitionPlannerGreedyPriority planner = new AcquisitionPlannerGreedyPriority(pb);
+		AcquisitionPlannerGreedySimpleAcquisitions planner = new AcquisitionPlannerGreedySimpleAcquisitions(pb);
 		planner.planAcquisitions();	
 		for(Satellite satellite : pb.satellites){
 			planner.writePlan(satellite, "output/solutionAcqPlan_"+satellite.name+".txt");
