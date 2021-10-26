@@ -35,17 +35,40 @@ import problem.Station;
 
 public class TimeBasedDownloadPlanner {
 
-    public Map<Satellite, Boolean> get_station_visi(Double time, Station station){
-        //TODO
+    public Map<Satellite, Boolean> get_station_visi(Double time, Station station, PlanningProblem pb){
         
+		Map<Satellite, Boolean> station_visi = new HashMap<Satellite, Boolean>();
+
+		for (Satellite s : pb.satellites){
+			station_visi.put(s, false);
+		}
+
+		for (DownloadWindow d : pb.downloadWindows){
+			if (time >= d.start && time <= d.end){
+				station_visi.put(d.satellite, true);
+			}
+		}
+
+		return station_visi;
     }
     
-    public int get_sat_visi(Double time, Satellite sat){
-        //TODO
+    public int get_sat_visi(Double time, Satellite sat, PlanningProblem pb){
+        
+		int sat_visi = 0;
+		List<Station> list_stations = new ArrayList<Station>();
+
+		for (DownloadWindow d : pb.downloadWindows){
+			if (time >= d.start && time <= d.end && d.satellite == sat && !list_stations.contains(d.station)){
+				sat_visi += 1;
+				list_stations.add(d.station);
+			}
+		}
+
+		return sat_visi;
     }
 
-    public Boolean is_sat_occupied(Double time, Satellite sat){
-        //TODO
+    public Boolean is_sat_occupied(Double time, Satellite sat, PlanningProblem pb){
+        // To_DO
     }
 
 
