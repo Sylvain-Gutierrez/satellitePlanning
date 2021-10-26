@@ -171,6 +171,21 @@ public class BadAcquisitionPlannerGreedy {
 		writer.close();
 	}
 
+	public void printScores(PlanningProblem pb){
+		double prio_score = 0;
+		double cloud_score = 0;
+		for (Satellite sat : pb.satellites){
+			SatellitePlan plan = satellitePlans.get(sat);
+			for(AcquisitionWindow aw : plan.getAcqWindows()){
+				prio_score  += 1 - aw.candidateAcquisition.priority;
+				cloud_score += 1 - aw.cloudProba;
+
+			}
+		}
+		System.out.println(prio_score);
+		System.out.println(cloud_score);
+	}
+
 	
 	public static void main(String[] args) throws XMLStreamException, FactoryConfigurationError, IOException{
 		ProblemParserXML parser = new ProblemParserXML(); 
@@ -181,6 +196,7 @@ public class BadAcquisitionPlannerGreedy {
 		for(Satellite satellite : pb.satellites){
 			planner.writePlan(satellite, "output/solutionAcqPlan_"+satellite.name+".txt");
 		}
+		planner.printScores(pb);
 		System.out.println("Acquisition planning done");
 	}
 	

@@ -9,6 +9,8 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Map;
+import java.util.HashMap;
 
 import javax.xml.stream.FactoryConfigurationError;
 import javax.xml.stream.XMLStreamException;
@@ -21,6 +23,7 @@ import problem.PlanningProblem;
 import problem.RecordedAcquisition;
 import problem.ProblemParserXML;
 import problem.Satellite;
+import problem.Station;
 
 /**
  * Class implementing a download planner which tries to insert downloads into the plan
@@ -29,8 +32,41 @@ import problem.Satellite;
  * @author cpralet
  *
  */
-public class BadDownloadPlanner {
-	
+
+public class TimeBasedDownloadPlanner {
+
+    public Map<Satellite, Boolean> get_station_visi(Double time, Station station){
+        //TODO
+        
+    }
+    
+    public int get_sat_visi(Double time, Satellite sat){
+        //TODO
+    }
+
+    public Boolean is_sat_occupied(Double time, Satellite sat){
+        //TODO
+    }
+
+
+
+
+    
+    public static Station get_min_key(Map<Station, Double> map){
+        List<Station> keys = new ArrayList<>(map.keySet());
+        Station key = keys.get(0);
+        Double minimum = map.get(key);
+
+        for (Station k : keys){
+            if (map.get(k) < minimum){
+                key = k;
+                minimum = map.get(k);
+            }
+        }
+
+        return key;
+    }
+
 	public static void planDownloads(SolutionPlan plan, String solutionFilename) throws IOException{
 
 		PlanningProblem pb = plan.pb;
@@ -40,7 +76,95 @@ public class BadDownloadPlanner {
 
 		boolean firstLine = true;
 
-		// plan downloads for each satellite independently (solution which might violate some constraints for large constellations)
+
+
+        Map<Station, Double> StationCurrentTimes = new HashMap<Station,Double>();
+
+        for (Station station : pb.stations){
+            StationCurrentTimes.put(station, 1e99);
+        }
+
+        for (DownloadWindow dlw : pb.downloadWindows){
+            if (dlw.start < StationCurrentTimes.get(dlw.station)){
+                StationCurrentTimes.put(dlw.station,dlw.start);
+            }
+        }
+        
+        Station currentStation = get_min_key(StationCurrentTimes);
+        Double currentTime = StationCurrentTimes.get(currentStation);
+        Map<Satellite, Boolean> satVisi = new HashMap<Satellite, Boolean>();
+
+
+
+
+
+
+        while (true){
+
+            
+           
+
+
+
+            break;
+        }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 		for(Satellite satellite : pb.satellites){
 			// get all recorded acquisitions associated with this satellite
 			List<Acquisition> candidateDownloads = new ArrayList<Acquisition>();
