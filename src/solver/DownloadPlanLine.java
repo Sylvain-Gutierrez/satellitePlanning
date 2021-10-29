@@ -1,5 +1,9 @@
 package solver;
 
+import problem.Satellite;
+import problem.Station;
+import problem.Acquisition;
+
 /**
  * @author sylvain
  *
@@ -16,6 +20,7 @@ public class DownloadPlanLine {
 	public final double end;
 	/** Index of this download window in the list of download windows of the problem */
 	public final int idx;
+	public final Acquisition acquisition;
 	
 	/**
 	 * Create a download plan line
@@ -24,13 +29,14 @@ public class DownloadPlanLine {
 	 * @param station
 	 * @param start
 	 * @param end
-     * @param aquisition
+     * @param acquisition
 	 */
-	public DownloadPlanLine(Satellite satellite, Station station, double start, double end, int idxInDownloadWindows, Acquisition aq){
+	public DownloadPlanLine(Satellite satellite, Station station, double start, double end, int idxInDownloadWindows, Acquisition acq){
 		this.satellite = satellite;
 		this.station = station;
 		this.start = start;
 		this.end = end;
 		this.idx = idxInDownloadWindows; 
-        this.aquisition = aq;
+        this.acquisition = acq;
 	}
+}

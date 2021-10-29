@@ -35,24 +35,24 @@ import problem.Station;
 
 public class TimeBasedDownloadPlanner {
 
-    public Map<Satellite, Boolean> get_station_visi(Double time, Station station, PlanningProblem pb){
+    public static List<Satellite> get_station_visi(Double time, Station station, PlanningProblem pb, List<DownloadPlanLine> plan){
         
-		Map<Satellite, Boolean> station_visi = new HashMap<Satellite, Boolean>();
-
-		for (Satellite s : pb.satellites){
-			station_visi.put(s, false);
-		}
+		List<Satellite> station_visi = new ArrayList<Satellite>();
 
 		for (DownloadWindow d : pb.downloadWindows){
-			if (time >= d.start && time <= d.end && d.station == station){
-				station_visi.put(d.satellite, true);
+			if (time >= d.start 
+				&& time <= d.end 
+				&& d.station == station 
+				&& is_sat_occupied(time, d.satellite, plan) == false
+				&& !station_visi.contains(d.satellite)){
+				station_visi.add(d.satellite);
 			}
 		}
 
 		return station_visi;
     }
     
-    public int get_sat_visi(Double time, Satellite sat, PlanningProblem pb){
+    public static int get_sat_visi(Double time, Satellite sat, PlanningProblem pb){
         
 		int sat_visi = 0;
 		List<Station> list_stations = new ArrayList<Station>();
@@ -67,8 +67,14 @@ public class TimeBasedDownloadPlanner {
 		return sat_visi;
     }
 
-    public Boolean is_sat_occupied(Double time, Satellite sat, PlanningProblem pb, List<DownloadPlanLine> plan){
-        // To_DO
+    public static Boolean is_sat_occupied(Double time, Satellite sat, List<DownloadPlanLine> plan){
+        for (DownloadPlanLine line : plan){
+			if (time >= line.start && time <= line.end && line.satellite == sat) {
+				return true;
+			}
+		}
+
+		return false;
     }
 
 
@@ -99,25 +105,27 @@ public class TimeBasedDownloadPlanner {
 
 		boolean firstLine = true;
 
+		List<DownloadPlanLine> downloadPlan = new ArrayList<DownloadPlanLine>();
 
-
-        Map<Station, Double> StationCurrentTimes = new HashMap<Station,Double>();
+        Map<Station, Double> stationCurrentTimes = new HashMap<Station,Double>();
 
         for (Station station : pb.stations){
-            StationCurrentTimes.put(station, 1e99);
+            stationCurrentTimes.put(station, 1e42);
         }
 
         for (DownloadWindow dlw : pb.downloadWindows){
-            if (dlw.start < StationCurrentTimes.get(dlw.station)){
-                StationCurrentTimes.put(dlw.station,dlw.start);
+            if (dlw.start < stationCurrentTimes.get(dlw.station)){
+                stationCurrentTimes.put(dlw.station,dlw.start);
             }
         }
         
-        Station currentStation = get_min_key(StationCurrentTimes);
-        Double currentTime = StationCurrentTimes.get(currentStation);
-        Map<Satellite, Boolean> satVisi = new HashMap<Satellite, Boolean>();
+        Station currentStation = get_min_key(stationCurrentTimes);
+        Double currentTime = stationCurrentTimes.get(currentStation);
+        List<Satellite> station_visi = get_station_visi(currentTime, currentStation, pb, downloadPlan);
 
-
+		for (Satellite sat : station_visi){
+			
+		}
 
 
 
