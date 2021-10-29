@@ -18,9 +18,10 @@ public class DownloadPlanLine {
 	public final double start;
 	/** End time of this download window */
 	public final double end;
-	/** Index of this download window in the list of download windows of the problem */
-	public final int idx;
 	public final Acquisition acquisition;
+
+	/** Index of this download window in the list of download windows of the problem */
+	// public final int idx;
 	
 	/**
 	 * Create a download plan line
@@ -31,12 +32,12 @@ public class DownloadPlanLine {
 	 * @param end
      * @param acquisition
 	 */
-	public DownloadPlanLine(Satellite satellite, Station station, double start, double end, int idxInDownloadWindows, Acquisition acq){
+	public DownloadPlanLine(Satellite satellite, Station station, double start, double end, Acquisition acq){ //, int idxInDownloadWindows){
 		this.satellite = satellite;
 		this.station = station;
 		this.start = start;
 		this.end = end;
-		this.idx = idxInDownloadWindows; 
         this.acquisition = acq;
+		// this.idx = idxInDownloadWindows; 
 	}
 }

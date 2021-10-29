@@ -20,4 +20,5 @@ public class Params {
 	public final static double downlinkRate = 1E6;
 	
 	public final static double priorityCloudProbaWeight = 2.;
+	public final static double waitingTime = 1.;
 }
