@@ -44,7 +44,7 @@ public class TimeBasedDownloadPlanner {
 		}
 
 		for (DownloadWindow d : pb.downloadWindows){
-			if (time >= d.start && time <= d.end){
+			if (time >= d.start && time <= d.end && d.station == station){
 				station_visi.put(d.satellite, true);
 			}
 		}
@@ -67,7 +67,7 @@ public class TimeBasedDownloadPlanner {
 		return sat_visi;
     }
 
-    public Boolean is_sat_occupied(Double time, Satellite sat, PlanningProblem pb){
+    public Boolean is_sat_occupied(Double time, Satellite sat, PlanningProblem pb, List<DownloadPlanLine> plan){
         // To_DO
     }
 
