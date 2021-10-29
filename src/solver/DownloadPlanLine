@@ -1,0 +1,36 @@
+package problem;
+
+/**
+ * @author sylvain
+ *
+ */
+public class DownloadPlanLine {
+
+	/** Satellite associated with this download window */
+	public final Satellite satellite;
+	/** Station associated with this download window */
+	public final Station station;
+	/** Start time of this download window */
+	public final double start;
+	/** End time of this download window */
+	public final double end;
+	/** Index of this download window in the list of download windows of the problem */
+	public final int idx;
+	
+	/**
+	 * Create a download plan line
+	 * @param id 
+	 * @param satellite
+	 * @param station
+	 * @param start
+	 * @param end
+     * @param aquisition
+	 */
+	public DownloadPlanLine(Satellite satellite, Station station, double start, double end, int idxInDownloadWindows, Acquisition aq){
+		this.satellite = satellite;
+		this.station = station;
+		this.start = start;
+		this.end = end;
+		this.idx = idxInDownloadWindows; 
+        this.aquisition = aq;
+	}
