@@ -40,11 +40,13 @@ public class TimeBasedDownloadPlanner {
 		List<Satellite> station_visi = new ArrayList<Satellite>();
 
 		for (DownloadWindow d : pb.downloadWindows){
+			
 			if (time >= d.start 
 				&& time <= d.end - min_dl_time
 				&& d.station == station 
 				&& is_sat_occupied(time, d.satellite, plan) == false
-				&& !station_visi.contains(d.satellite)){
+				&& !station_visi.contains(d.satellite)
+				){
 				station_visi.add(d.satellite);
 			}
 		}
@@ -125,13 +127,13 @@ public class TimeBasedDownloadPlanner {
 
 		Double min_dl_time = 100000.;
 		for (RecordedAcquisition acq : pb.recordedAcquisitions){
-			Double tt = acq.getVolume()*Params.downlinkRate;
+			Double tt = acq.getVolume()/Params.downlinkRate;
 			if (tt < min_dl_time){
 				min_dl_time = tt;
 			}
 		}
 		for(CandidateAcquisition acq : acqPlan){
-			Double tt = acq.getVolume()*Params.downlinkRate;
+			Double tt = acq.getVolume()/Params.downlinkRate;
 			if (tt < min_dl_time){
 				min_dl_time = tt;
 			}
@@ -165,22 +167,29 @@ public class TimeBasedDownloadPlanner {
 			for (Satellite sat : station_visi){
 				// get all recorded acquisitions associated with this satellite
 				List<Acquisition> candidateDownloads = new ArrayList<Acquisition>();
+				
+				// System.out.println("Squalala nous sommes partis");
 				for(RecordedAcquisition dl : pb.recordedAcquisitions){
 					if(dl.satellite == sat){
 						candidateDownloads.add(dl);
 					}
 				}
+				// System.out.println(candidateDownloads.size());
+
 				// get all planned acquisitions associated with this satellite
 				for(CandidateAcquisition a : acqPlan){
 					if(a.selectedAcquisitionWindow.satellite == sat && a.getAcquisitionTime() < currentTime)
 						candidateDownloads.add(a);
 				}
+				// System.out.println(candidateDownloads.size());
+
 				// remove already downloaded acquisition on this satellite
 				for (Acquisition alreadyDownloadedAcquisition : alreadyDownloaded){
 					if (candidateDownloads.contains(alreadyDownloadedAcquisition)) {
 						candidateDownloads.remove(alreadyDownloadedAcquisition);
 					}
 				}
+				// System.out.println(candidateDownloads.size());
 
 				if (candidateDownloads.size() > 0){
 					// sort acquisitions by priority then start time
@@ -191,7 +200,7 @@ public class TimeBasedDownloadPlanner {
 				
 					Acquisition downloadAcquisition = candidateDownloads.remove(0);
 					for (DownloadWindow dlw : pb.downloadWindows){
-						if (dlw.start <= currentTime && dlw.end<currentTime && dlw.satellite == downloadAcquisition.getSatellite() && dlw.station == currentStation){
+						if (dlw.start <= currentTime && dlw.end > currentTime && dlw.satellite == downloadAcquisition.getSatellite() && dlw.station == currentStation){
 							currentWindow = dlw;
 						}
 					}
@@ -233,16 +242,24 @@ public class TimeBasedDownloadPlanner {
 			}
 			if (new_download_done == false) {
 				stationCurrentTimes.put(currentStation, currentTime + Params.waitingTime);
-				System.out.println("Waiting on station " + currentStation.name);
+				// System.out.println("Waiting on station " + currentStation.name);
 				if (stationCurrentTimes.get(currentStation) >= currentWindow.end){
 					Double local_Time = end_Time;
+					Boolean jump_done = false;
 					for (DownloadWindow dlw : pb.downloadWindows){
-						if (dlw.start >= currentTime && dlw.start < local_Time){
+						if (dlw.start > currentTime && dlw.start < local_Time && dlw.station == currentStation){
 							local_Time = dlw.start;
+							jump_done = true;
 						}
 					}
-					stationCurrentTimes.put(currentStation, local_Time);
-					System.out.println("Waiting until next DLwindow on station " + currentStation.name);
+					if (jump_done == true) {
+						stationCurrentTimes.put(currentStation, local_Time);
+						System.out.println("Waiting until next DLwindow on station " + currentStation.name);
+					}
+					else {
+						stationCurrentTimes.put(currentStation, end_Time);
+						System.out.println("Waiting until the end on station " + currentStation.name);
+					}
 				}
 			}
         }		
