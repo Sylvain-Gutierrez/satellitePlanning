@@ -18,7 +18,19 @@ public class Params {
 	public final static double meanRotationSpeed = (2*Math.PI)/180; // 2 degrees per second
 	/** Rate associated with data downlink to ground stations (in bits per second) */
 	public final static double downlinkRate = 1E6;
+
+
 	
 	public final static double priorityCloudProbaWeight = 2.;
+
+	/** Borders of the cloud probability subgroups :
+	 *  the subgroups are [                   0.0;  probabilityBorders(0)]
+	 *                    [ probabilityBorders(0);  probabilityBorders(1)]
+	 *                    ...
+	 *                    [probabilityBorders(-2); probabilityBorders(-1)]
+	 * Used in a version of the acquisition planner.
+	 * This will neglect all windows with cloudProba > probabilityBorders(-1). */
+	public final static Double[] probabilityBorders = {0.1, 0.2, 0.4, 0.8};
+
 	public final static double waitingTime = 1.;
 }
