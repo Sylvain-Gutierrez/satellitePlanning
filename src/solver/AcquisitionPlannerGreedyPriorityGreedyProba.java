@@ -29,7 +29,7 @@ import problem.Satellite;
  * @author cpralet
  *
  */
-public class AcquisitionPlannerGreedySimpleAcquisitions {
+public class AcquisitionPlannerGreedyPriorityGreedyProba {
 
 	/** Planning problem for which this acquisition planner is used */
 	private final PlanningProblem planningProblem;
@@ -41,7 +41,7 @@ public class AcquisitionPlannerGreedySimpleAcquisitions {
 	 * Build an acquisition planner for a planning problem
 	 * @param planningProblem
 	 */
-	public AcquisitionPlannerGreedySimpleAcquisitions(PlanningProblem planningProblem){
+	public AcquisitionPlannerGreedyPriorityGreedyProba(PlanningProblem planningProblem){
 		this.planningProblem = planningProblem;
 		satellitePlans = new HashMap<Satellite,SatellitePlan>();
 		for(Satellite satellite : planningProblem.satellites){
@@ -55,76 +55,91 @@ public class AcquisitionPlannerGreedySimpleAcquisitions {
 	 */
 	public void planAcquisitions(){
 		
-		List<CandidateAcquisition> candidateAcquisitions = new ArrayList<CandidateAcquisition>(planningProblem.candidateAcquisitions);
-        int nCandidates = candidateAcquisitions.size();
+		List<CandidateAcquisition> temp_candidateAcquisitions = new ArrayList<CandidateAcquisition>(planningProblem.candidateAcquisitions);
+        int nCandidates = temp_candidateAcquisitions.size();
 		int nPlanned = 0;
         
         // Comparator used to sort the list
+
+		List<CandidateAcquisition> candidateAcquisitions = new ArrayList<CandidateAcquisition>();
+		List<CandidateAcquisition> candidateAcquisitionsPriority0 = new ArrayList<CandidateAcquisition>();
+		List<CandidateAcquisition> candidateAcquisitionsPriority1 = new ArrayList<CandidateAcquisition>();
         
-		// Map<CandidateAcquisition,CandidateAcquisition> simpleCandidateAcquisitions = new HashMap<CandidateAcquisition,CandidateAcquisition>();
-		// for(CandidateAcquisition acq : candidateAcquisitions){
-		// 	for(AcquisitionWindow w : acq.acquisitionWindows){
-		// 		CandidateAcquisition temp_acq = new CandidateAcquisition(acq.name, acq.user, acq.priority, acq.longitude, acq.latitude, acq.idx);
-		// 		temp_acq.acquisitionWindows.add(w);
-		// 		simpleCandidateAcquisitions.put(temp_acq, acq);
-		// 	}
-		// }
-
-		List<CandidateAcquisition> simpleCandidateAcquisitions = new ArrayList<CandidateAcquisition>();
-		for(CandidateAcquisition acq : candidateAcquisitions){
-				for(AcquisitionWindow w : acq.acquisitionWindows){
-					CandidateAcquisition temp_acq = new CandidateAcquisition(acq.name, acq.user, acq.priority, acq.longitude, acq.latitude, acq.idx);
-					temp_acq.acquisitionWindows.add(w);
-					simpleCandidateAcquisitions.add(temp_acq);
-				}
+		for (CandidateAcquisition acq : temp_candidateAcquisitions){
+			if (acq.priority == 0){
+				candidateAcquisitionsPriority0.add(acq);
 			}
+			if (acq.priority == 1){
+				candidateAcquisitionsPriority1.add(acq);
+			}
+		}
+		
+		Collections.shuffle(candidateAcquisitionsPriority0);
+		Collections.shuffle(candidateAcquisitionsPriority1);
+		candidateAcquisitions.addAll(candidateAcquisitionsPriority0);
+		candidateAcquisitions.addAll(candidateAcquisitionsPriority1);
 
-			
-		Collections.sort(simpleCandidateAcquisitions,new Comparator<CandidateAcquisition>(){
-			public int compare(CandidateAcquisition a1,CandidateAcquisition a2){
-					return (int) (1000*(a1.priority - a2.priority + Params.priorityCloudProbaWeight * (a1.acquisitionWindows.get(0).cloudProba - a2.acquisitionWindows.get(0).cloudProba)));
-			}});
-
-		while(!simpleCandidateAcquisitions.isEmpty()){
+		while(!candidateAcquisitions.isEmpty()){
             // select one candidate acquisition by priority and cloudProba
             
             // randomize in order to test the solver:
             //Collections.shuffle(candidateAcquisitions);
 
-            // Collections.sort(candidateAcquisitions,new Comparator<CandidateAcquisition>(){
-            //     public int compare(CandidateAcquisition a1,CandidateAcquisition a2){
-            //           return a1.priority - a2.priority;
-            //     }});
-            // CandidateAcquisition a = candidateAcquisitions.remove(0);                
-            
-			// List<CandidateAcquisition> simpleCandidateAcquisitionsKeys = new ArrayList<CandidateAcquisition>();
-			// for (CandidateAcquisition a : simpleCandidateAcquisitions.keySet()) {
-			// 	simpleCandidateAcquisitionsKeys.add(a);
-			//   }
-
-			CandidateAcquisition a = simpleCandidateAcquisitions.remove(0);
-
-
-
+            CandidateAcquisition a = candidateAcquisitions.remove(0);                
+                
             // try to plan one acquisition window for this acquisition (and stop once a feasible acquisition window is found
-            for(AcquisitionWindow acqWindow : a.acquisitionWindows){
-				Satellite satellite = acqWindow.satellite;
-				SatellitePlan satellitePlan = satellitePlans.get(satellite);
-				satellitePlan.add(acqWindow);
-				if(satellitePlan.isFeasible()){
-					nPlanned++;
-					a.selectedAcquisitionWindow = acqWindow;
-					List <CandidateAcquisition> removeList = new ArrayList<CandidateAcquisition>();
-					for(CandidateAcquisition acq : simpleCandidateAcquisitions){
-						if (acq.name.equals(a.name)) {
-							removeList.add(acq);
+			
+			if (a.acquisitionWindows.size() > 0){
+				boolean martin = false;
+				AcquisitionWindow feasible = a.acquisitionWindows.get(0);
+				for(AcquisitionWindow acqWindow : a.acquisitionWindows){
+					// feasible = acqWindow;
+
+					Satellite satellite = acqWindow.satellite;
+					SatellitePlan satellitePlan = satellitePlans.get(satellite);
+					satellitePlan.add(acqWindow);
+
+					if(satellitePlan.isFeasible()){
+						if (martin == false) {
+							martin = true;
 						}
+						else{
+							if (acqWindow.cloudProba < feasible.cloudProba){
+								feasible = acqWindow;
+							}
+						}
+						
 					}
-					simpleCandidateAcquisitions.removeAll(removeList);
-				}
-				else
 					satellitePlan.remove(acqWindow);
+
+					// if(satellitePlan.isFeasible()){
+					// 	nPlanned++;
+					// 	a.selectedAcquisitionWindow = acqWindow;
+					// 	break;
+					// }
+					// else
+					// 	satellitePlan.remove(acqWindow);
+				}
+
+				if (martin != false){
+					// Collections.sort(feasibles,new Comparator<AcquisitionWindow>(){
+					// 	public int compare(AcquisitionWindow a1,AcquisitionWindow a2){
+					// 		  return (int) (1000*(a1.cloudProba - a2.cloudProba));
+					// 	}});
+
+					// AcquisitionWindow acqWindow0 = feasibles.get(0);
+					Satellite satellite = feasible.satellite;
+					SatellitePlan satellitePlan = satellitePlans.get(satellite);
+					satellitePlan.add(feasible);
+					nPlanned++;
+					a.selectedAcquisitionWindow = feasible;
+				}
 			}
+			
+			// else{
+			// 	System.out.println("BlzpifnkzjhbfsJDFN QKSJENF OQLIZNJFQUERJ");
+			// }
+
         }
 		System.out.println("nPlanned: " + nPlanned + "/" + nCandidates);
 	}
@@ -218,21 +233,6 @@ public class AcquisitionPlannerGreedySimpleAcquisitions {
 		writer.close();
 	}
 
-	// public void printScores(PlanningProblem pb){
-	// 	double prio_score = 0;
-	// 	double cloud_score = 0;
-	// 	for (Satellite sat : pb.satellites){
-	// 		SatellitePlan plan = satellitePlans.get(sat);
-	// 		for(AcquisitionWindow aw : plan.getAcqWindows()){
-	// 			prio_score  += 1 - aw.candidateAcquisition.priority;
-	// 			cloud_score += 1 - aw.cloudProba;
-
-	// 		}
-	// 	}
-	// 	System.out.println(prio_score);
-	// 	System.out.println(cloud_score);
-	// }
-
 	public void printScores(PlanningProblem pb){
 		// double prio_score = 0;
 		double cloud_score = 0;
@@ -255,7 +255,7 @@ public class AcquisitionPlannerGreedySimpleAcquisitions {
 		ProblemParserXML parser = new ProblemParserXML(); 
 		PlanningProblem pb = parser.read(Params.systemDataFile,Params.planningDataFile);
 		pb.printStatistics();
-		AcquisitionPlannerGreedySimpleAcquisitions planner = new AcquisitionPlannerGreedySimpleAcquisitions(pb);
+		AcquisitionPlannerGreedyPriorityGreedyProba planner = new AcquisitionPlannerGreedyPriorityGreedyProba(pb);
 		planner.planAcquisitions();	
 		for(Satellite satellite : pb.satellites){
 			planner.writePlan(satellite, "output/solutionAcqPlan_"+satellite.name+".txt");

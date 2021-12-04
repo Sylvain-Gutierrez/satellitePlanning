@@ -3,11 +3,11 @@ package params;
 public class Params {
 
 	/** Constellation considered */
-	public final static String constellation = "02sat";
-	//public final static String constellation = "08sat";
-	//public final static String constellation = "18sat";
+	// public final static String constellation = "02sat";
+	// public final static String constellation = "08sat";
+	public final static String constellation = "18sat";
 	/** Planning horizon considered */
-	public final static String horizon = "04h"; 
+	public final static String horizon = "24h"; 
 	//public final static String horizon = "12h";
 	//public final static String horizon = "24h";
 	/** File containing a description of all static data (satellites, users, stations) */
@@ -31,6 +31,7 @@ public class Params {
 	 * Used in a version of the acquisition planner.
 	 * This will neglect all windows with cloudProba > probabilityBorders(-1). */
 	public final static Double[] probabilityBorders = {0.1, 0.2, 0.4, 0.8};
+	public final static Double probability_threshold = 0.8;
 
 	public final static double waitingTime = 1.;
 }

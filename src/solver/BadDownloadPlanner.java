@@ -4,6 +4,7 @@ import java.io.BufferedWriter;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.lang.Thread.State;
 import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -21,6 +22,7 @@ import problem.PlanningProblem;
 import problem.RecordedAcquisition;
 import problem.ProblemParserXML;
 import problem.Satellite;
+import problem.Station;
 
 /**
  * Class implementing a download planner which tries to insert downloads into the plan
@@ -39,6 +41,11 @@ public class BadDownloadPlanner {
 		PrintWriter writer = new PrintWriter(new BufferedWriter(new FileWriter(solutionFilename, false)));
 
 		boolean firstLine = true;
+
+
+		List<Station> stations_ = new ArrayList<Station>();
+		List<Double> start_ = new ArrayList<Double>();
+		List<Double> stop_ = new ArrayList<Double>();
 
 		// plan downloads for each satellite independently (solution which might violate some constraints for large constellations)
 		for(Satellite satellite : pb.satellites){
@@ -114,10 +121,29 @@ public class BadDownloadPlanner {
 				}
 				else 
 					writer.write("\n");
-				if(a instanceof RecordedAcquisition)
+				if(a instanceof RecordedAcquisition){
+
+					for (int iii = 0; iii<stations_.size(); iii++){
+						if ((currentWindow.station == stations_.get(iii)) && (currentTime > start_.get(iii)) && (currentTime < stop_.get(iii))){
+							System.out.println(currentWindow.station);
+							System.out.println(currentTime);
+						}
+					}
+
 					writer.write("REC " + ((RecordedAcquisition) a).idx + " " + currentWindow.idx + " " + currentTime + " " + (currentTime+dlDuration));
-				else // case CandidateAcquisition
+				}
+				else {
+
+					for (int iii = 0; iii<stations_.size(); iii++){
+						if ((currentWindow.station == stations_.get(iii)) && (currentTime > start_.get(iii)) && (currentTime < stop_.get(iii))){
+							System.out.println(currentWindow.station);
+							System.out.println(currentTime);
+						}
+					}
+
 					writer.write("CAND " + ((CandidateAcquisition) a).idx + " " + currentWindow.idx + " " + currentTime + " " + (currentTime+dlDuration));
+				}
+					
 				currentTime += dlDuration;
 			}
 		}

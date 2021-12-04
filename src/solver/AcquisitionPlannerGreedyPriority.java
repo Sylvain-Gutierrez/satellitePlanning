@@ -180,21 +180,37 @@ public class AcquisitionPlannerGreedyPriority {
 		writer.close();
 	}
 
+	// public void printScores(PlanningProblem pb){
+	// 	double prio_score = 0;
+	// 	double cloud_score = 0;
+	// 	for (Satellite sat : pb.satellites){
+	// 		SatellitePlan plan = satellitePlans.get(sat);
+	// 		for(AcquisitionWindow aw : plan.getAcqWindows()){
+	// 			prio_score  += 1 - aw.candidateAcquisition.priority;
+	// 			cloud_score += 1 - aw.cloudProba;
+
+	// 		}
+	// 	}
+	// 	System.out.println(prio_score);
+	// 	System.out.println(cloud_score);
+	// }
+	
 	public void printScores(PlanningProblem pb){
-		double prio_score = 0;
+		// double prio_score = 0;
 		double cloud_score = 0;
+		int size = 0;
 		for (Satellite sat : pb.satellites){
 			SatellitePlan plan = satellitePlans.get(sat);
+			int local_size = plan.getAcqWindows().size();
 			for(AcquisitionWindow aw : plan.getAcqWindows()){
-				prio_score  += 1 - aw.candidateAcquisition.priority;
-				cloud_score += 1 - aw.cloudProba;
-
+				// prio_score  += 1 - aw.candidateAcquisition.priority;
+				cloud_score += aw.cloudProba;
 			}
+			size += local_size;
 		}
-		System.out.println(prio_score);
-		System.out.println(cloud_score);
+		System.out.println("Mean cloud probability : ");
+		System.out.println(cloud_score/size);
 	}
-
 	
 	public static void main(String[] args) throws XMLStreamException, FactoryConfigurationError, IOException{
 		ProblemParserXML parser = new ProblemParserXML(); 

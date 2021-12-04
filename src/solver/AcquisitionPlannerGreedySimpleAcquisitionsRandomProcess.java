@@ -105,22 +105,67 @@ public class AcquisitionPlannerGreedySimpleAcquisitionsRandomProcess {
 		int istart = 0;
 		int istop  = 0;
 		double proba = 0;
-		for (int bidx = 0 ; bidx < borders.size() ; bidx++) {
-			do {
-				proba = simpleCandidateAcquisitionsPriority0.get(istop).acquisitionWindows.get(0).cloudProba;
-				istop++;
-			} while (proba < borders.get(bidx));
-			istop  = istop - 1;
+		// for (int bidx = 0 ; bidx < borders.size() ; bidx++) {
+			// do {
+			// 	proba = simpleCandidateAcquisitionsPriority0.get(istop).acquisitionWindows.get(0).cloudProba;
+			// 	istop++;
+			// } while (proba < borders.get(bidx));
+
+
+		for (double proba_threshold : borders){
+
+			System.out.println(proba_threshold);
+			while (true){
+				try {
+					proba = simpleCandidateAcquisitionsPriority0.get(istop).acquisitionWindows.get(0).cloudProba;
+					if (proba < proba_threshold){
+						istop++;
+						System.out.println("Hello !");
+					}
+					else {break;}
+				}
+				catch (Exception e) {
+					break;
+				}
+			}
+
 			if (istop == istart){
 				current_subgroup = Collections.emptyList();
+
 			} else {
-				current_subgroup = simpleCandidateAcquisitionsPriority0.subList(istart,istop);
+				current_subgroup = simpleCandidateAcquisitionsPriority0.subList(istart,istop+1);
 			}
+
 			istart = istop;
 			Collections.shuffle(current_subgroup);
-			System.out.println(current_subgroup);
+			// System.out.println(current_subgroup);
 			simpleCandidateAcquisitions.addAll(current_subgroup);
 		}
+
+		for (double proba_threshold : borders){
+
+			while (true){
+				try {
+					proba = simpleCandidateAcquisitionsPriority1.get(istop).acquisitionWindows.get(0).cloudProba;
+					if (proba < proba_threshold){
+						istop++;
+					}
+					else {break;}
+				}
+				catch (Exception e) {
+					break;
+				}
+			}
+
+			if (istop != istart){
+				current_subgroup = simpleCandidateAcquisitionsPriority1.subList(istart,istop+1);
+				istart = istop;
+				Collections.shuffle(current_subgroup);
+				// System.out.println(current_subgroup);
+				simpleCandidateAcquisitions.addAll(current_subgroup);
+			}
+		}
+
 
 		while(!simpleCandidateAcquisitions.isEmpty()){
 
@@ -260,7 +305,7 @@ public class AcquisitionPlannerGreedySimpleAcquisitionsRandomProcess {
 		ProblemParserXML parser = new ProblemParserXML(); 
 		PlanningProblem pb = parser.read(Params.systemDataFile,Params.planningDataFile);
 		pb.printStatistics();
-		AcquisitionPlannerGreedySimpleAcquisitions planner = new AcquisitionPlannerGreedySimpleAcquisitions(pb);
+		AcquisitionPlannerGreedySimpleAcquisitionsRandomProcess planner = new AcquisitionPlannerGreedySimpleAcquisitionsRandomProcess(pb);
 		planner.planAcquisitions();	
 		for(Satellite satellite : pb.satellites){
 			planner.writePlan(satellite, "output/solutionAcqPlan_"+satellite.name+".txt");
