@@ -7,7 +7,9 @@ import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.Dictionary;
 import java.util.HashMap;
+import java.util.Hashtable;
 import java.util.List;
 import java.util.Arrays;
 import java.util.Map;
@@ -69,131 +71,154 @@ public class AcquisitionPlannerGreedySimpleAcquisitionsRandomProcess {
 		
 		List<CandidateAcquisition> candidateAcquisitions = new ArrayList<CandidateAcquisition>(planningProblem.candidateAcquisitions);
         int nCandidates = candidateAcquisitions.size();
-		int nPlanned = 0;
+
+
+		// TEST: do all acquisitions have different names ?
+		Map<String,Integer> dic = new HashMap<String,Integer>();
+		for (CandidateAcquisition acq : candidateAcquisitions){
+			String name = acq.name;
+			if (dic.keySet().contains(name)){
+				dic.put(name, dic.get(name)+1);
+			} else {dic.put(name, 1);}
+		}
+		System.out.println(dic);
+
+
+
         
 		// Make simple acquisitions (with single associated window) and separate them in lists associated with priority
-		List<CandidateAcquisition> simpleCandidateAcquisitionsPriority0 = new ArrayList<CandidateAcquisition>();
-		List<CandidateAcquisition> simpleCandidateAcquisitionsPriority1 = new ArrayList<CandidateAcquisition>();
+		List<CandidateAcquisition> simple_candidate_acquisitions_priority0 = new ArrayList<CandidateAcquisition>();
+		List<CandidateAcquisition> simple_candidate_acquisitions_priority1 = new ArrayList<CandidateAcquisition>();
 		for(CandidateAcquisition acq : candidateAcquisitions){
 				for(AcquisitionWindow w : acq.acquisitionWindows){
 					CandidateAcquisition temp_acq = new CandidateAcquisition(acq.name, acq.user, acq.priority, acq.longitude, acq.latitude, acq.idx);
 					temp_acq.acquisitionWindows.add(w);
 					if (acq.priority == 0){
-						simpleCandidateAcquisitionsPriority0.add(temp_acq);
+						simple_candidate_acquisitions_priority0.add(temp_acq);
 					} else {
-						simpleCandidateAcquisitionsPriority1.add(temp_acq);
+						simple_candidate_acquisitions_priority1.add(temp_acq);
 					}
 				}
 			}
 
 
 		// Sort the lists (prio0 and prio1) wrt cloud probability
-		Comparator<CandidateAcquisition> CloudProbaComparator = new Comparator<CandidateAcquisition>(){
-			public int compare(CandidateAcquisition a1,CandidateAcquisition a2){
-				return (int) (a1.acquisitionWindows.get(0).cloudProba - a2.acquisitionWindows.get(0).cloudProba);
-			}};
-		Collections.sort(simpleCandidateAcquisitionsPriority0,CloudProbaComparator);
-		Collections.sort(simpleCandidateAcquisitionsPriority1,CloudProbaComparator);
-
-		// Separate the lists in subgroups of close importances.
-
-			//prio0
-		List<Double> borders = Arrays.asList(Params.probabilityBorders);
-		List<CandidateAcquisition> current_subgroup = new ArrayList<CandidateAcquisition>();
-		List<CandidateAcquisition> simpleCandidateAcquisitions = new ArrayList<CandidateAcquisition>();
-
-		int istart = 0;
-		int istop  = 0;
-		double proba = 0;
-		// for (int bidx = 0 ; bidx < borders.size() ; bidx++) {
-			// do {
-			// 	proba = simpleCandidateAcquisitionsPriority0.get(istop).acquisitionWindows.get(0).cloudProba;
-			// 	istop++;
-			// } while (proba < borders.get(bidx));
-
-
-		for (double proba_threshold : borders){
-
-			System.out.println(proba_threshold);
-			while (true){
-				try {
-					proba = simpleCandidateAcquisitionsPriority0.get(istop).acquisitionWindows.get(0).cloudProba;
-					if (proba < proba_threshold){
-						istop++;
-						System.out.println("Hello !");
-					}
-					else {break;}
-				}
-				catch (Exception e) {
-					break;
-				}
-			}
-
-			if (istop == istart){
-				current_subgroup = Collections.emptyList();
-
-			} else {
-				current_subgroup = simpleCandidateAcquisitionsPriority0.subList(istart,istop+1);
-			}
-
-			istart = istop;
-			Collections.shuffle(current_subgroup);
-			// System.out.println(current_subgroup);
-			simpleCandidateAcquisitions.addAll(current_subgroup);
-		}
-
-		for (double proba_threshold : borders){
-
-			while (true){
-				try {
-					proba = simpleCandidateAcquisitionsPriority1.get(istop).acquisitionWindows.get(0).cloudProba;
-					if (proba < proba_threshold){
-						istop++;
-					}
-					else {break;}
-				}
-				catch (Exception e) {
-					break;
-				}
-			}
-
-			if (istop != istart){
-				current_subgroup = simpleCandidateAcquisitionsPriority1.subList(istart,istop+1);
-				istart = istop;
-				Collections.shuffle(current_subgroup);
-				// System.out.println(current_subgroup);
-				simpleCandidateAcquisitions.addAll(current_subgroup);
-			}
-		}
-
-
-		while(!simpleCandidateAcquisitions.isEmpty()){
-
-			CandidateAcquisition a = simpleCandidateAcquisitions.remove(0);
-
-
-
-            // try to plan one acquisition window for this acquisition (and stop once a feasible acquisition window is found
-            for(AcquisitionWindow acqWindow : a.acquisitionWindows){
-				Satellite satellite = acqWindow.satellite;
-				SatellitePlan satellitePlan = satellitePlans.get(satellite);
-				satellitePlan.add(acqWindow);
-				if(satellitePlan.isFeasible()){
-					nPlanned++;
-					a.selectedAcquisitionWindow = acqWindow;
-					List <CandidateAcquisition> removeList = new ArrayList<CandidateAcquisition>();
-					for(CandidateAcquisition acq : simpleCandidateAcquisitions){
-						if (acq.name.equals(a.name)) {
-							removeList.add(acq);
-						}
-					}
-					simpleCandidateAcquisitions.removeAll(removeList);
-				}
+		class CloudProbaComparator implements Comparator<CandidateAcquisition> {
+			public int compare(CandidateAcquisition a1, CandidateAcquisition a2)
+			{
+				double p1 = a1.acquisitionWindows.get(0).cloudProba;
+				double p2 = a2.acquisitionWindows.get(0).cloudProba;
+				if (p1 == p2)
+					return 0;
+				else if (p1 > p2)
+					return 1;
 				else
-					satellitePlan.remove(acqWindow);
+					return -1;
 			}
-        }
-		System.out.println("nPlanned: " + nPlanned + "/" + nCandidates);
+		}
+		Collections.sort(simple_candidate_acquisitions_priority0,new CloudProbaComparator());
+		Collections.sort(simple_candidate_acquisitions_priority1,new CloudProbaComparator());
+		List<List<CandidateAcquisition>> all_priorities_acquisitions = new ArrayList<>(); 
+		all_priorities_acquisitions.add(simple_candidate_acquisitions_priority0);
+		all_priorities_acquisitions.add(simple_candidate_acquisitions_priority1);
+
+		/////////////
+		// Separate the lists in subgroups of close importances:
+		/////////////
+
+		List<List<CandidateAcquisition>> all_subgroups = new ArrayList<>(); 
+		List<Double> borders = Arrays.asList(Params.probabilityBorders);
+		
+		int n_priorities = all_priorities_acquisitions.size();
+		int priorities_left = n_priorities;
+		while (priorities_left > 0){
+			System.out.println("Current priority: "+ Integer.toString(n_priorities - priorities_left));
+			List<CandidateAcquisition> current_list = all_priorities_acquisitions.get(n_priorities - priorities_left);
+			List<CandidateAcquisition> current_subgroup = new ArrayList<CandidateAcquisition>();
+			
+			
+			// for each threshold of cloudProba defined in borders (list of probabilities), ...
+			int istart   = 0;
+			int istop    = 0;
+			double proba = 0.0;
+			for (double proba_threshold : borders){
+				System.out.println("probathreshold: " + proba_threshold);
+				int simpleAcqSize = current_list.size();
+				// ... locate the corresponding subgroup of acquisitions/windows, ...
+				boolean still_in_subgroup = true;
+				while (still_in_subgroup){
+					proba = current_list.get(istop).acquisitionWindows.get(0).cloudProba;
+					if (proba <= proba_threshold){
+						if (istop < simpleAcqSize-1){
+							istop++;
+						} else {still_in_subgroup = false;}
+					} else {still_in_subgroup = false;}
+				}
+				System.out.println("proba: " + proba);
+				// ... and extract the close cloud probabilities between this threshold and the previous one.
+				if (istop == istart){
+					current_subgroup = Collections.emptyList();
+					System.out.println("subgroup for threshold: "+ proba_threshold+" empty. previous proba: "+ proba + "next proba: " + simple_candidate_acquisitions_priority0.get(istop+1).acquisitionWindows.get(0).cloudProba);
+				} else {
+					current_subgroup = current_list.subList(istart,istop);
+					System.out.println("subgroup size: "+ current_subgroup.size());
+				}
+				all_subgroups.add(current_subgroup);
+				istart = istop;
+			}
+			
+			//////////////////////////
+			priorities_left -= 1;
+		}
+		
+		
+		List<CandidateAcquisition> simple_candidate_acquisitions = new ArrayList<CandidateAcquisition>();
+		
+		// RUN THE RANDOM PROCESS A NUMBER OF TIMES
+		for (int current_run = 0 ; current_run < Params.n_runs ; current_run++){
+			// Make an instance of the candidates list
+			for (List<CandidateAcquisition> subgroup : all_subgroups) {
+				Collections.shuffle(subgroup);
+				simple_candidate_acquisitions.addAll(subgroup);
+			}
+			
+			System.out.println("simple_candidate_acquisitions initial size: " + simple_candidate_acquisitions.size());
+			
+			int nPlanned = 0;
+			while(!simple_candidate_acquisitions.isEmpty()){
+
+				// for each distinct acquisition in the sorted and randomized list, pick the most advantageous window
+				CandidateAcquisition current_acq = simple_candidate_acquisitions.remove(0);
+				
+				// try to plan the acquisition with this window.
+				for(AcquisitionWindow acq_window : current_acq.acquisitionWindows){
+					Satellite satellite = acq_window.satellite;
+					SatellitePlan satellitePlan = satellitePlans.get(satellite);
+					satellitePlan.add(acq_window);
+					if(satellitePlan.isFeasible()){
+						current_acq.selectedAcquisitionWindow = acq_window;
+						// Remove duplicates (simple acquisitions created from the same as current_acq)
+						List <CandidateAcquisition> removeList = new ArrayList<CandidateAcquisition>();
+						for(CandidateAcquisition acq : simple_candidate_acquisitions){
+							if (acq.name.equals(current_acq.name)) {
+								removeList.add(acq);
+							}
+						}
+						nPlanned++; // acquisition was successfully planned.
+
+						//System.out.println("simple_candidate_acquisitions size before duplicates removed: " + simple_candidate_acquisitions.size());
+						simple_candidate_acquisitions.removeAll(removeList);
+						//System.out.println("simple_candidate_acquisitions size after duplicates removed: " + simple_candidate_acquisitions.size());
+					}
+					else {satellitePlan.remove(acq_window);}
+				}
+			}
+			System.out.println("nPlanned: " + nPlanned + "/" + nCandidates);
+
+		}
+
+
+		// il faut encore une structure de stockage du meilleur plan (i.e. si courant meilleur, remplacer le précédent)
 	}
 
 
@@ -296,8 +321,8 @@ public class AcquisitionPlannerGreedySimpleAcquisitionsRandomProcess {
 
 			}
 		}
-		System.out.println(prio_score);
-		System.out.println(cloud_score);
+		System.out.println("priority score: "+prio_score);
+		System.out.println("cloud probability score: "+cloud_score);
 	}
 
 	

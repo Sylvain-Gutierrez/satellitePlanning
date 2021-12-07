@@ -31,7 +31,9 @@ public class Params {
 	 * Used in a version of the acquisition planner.
 	 * This will neglect all windows with cloudProba > probabilityBorders(-1). */
 	public final static Double[] probabilityBorders = {0.1, 0.2, 0.4, 0.8};
-	public final static Double probability_threshold = 0.8;
 
 	public final static double waitingTime = 1.;
+
+	// For the random process, number of times the process is run before the best result is returned
+	public final static int n_runs = 1;
 }
